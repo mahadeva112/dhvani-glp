@@ -137,3 +137,22 @@ test('empty or unusable input yields no cues rather than fabricated ones', () =>
   assert.deepEqual(buildCuesFromWords([]), []);
   assert.deepEqual(buildCuesFromWords([{ text: ' ', start: 0, end: 1, type: 'spacing' }]), []);
 });
+
+test('Chinese and Japanese words make one cue text with no spaces, wrapped by width', () => {
+  const words = ['今日', 'は', 'いい', '天気', 'です', 'ね。'].map((text, i) => ({ text, start: i * 0.3, end: i * 0.3 + 0.25, type: 'word' }));
+  const cues = buildCuesFromWords(words);
+  assert.equal(cues.length, 1);
+  assert.equal(cues[0].text, '今日はいい天気ですね。');
+  const long = '人生に本当に関わっていると、退屈など生まれません。人生に本当に関わっていると、退屈など生まれません。';
+  const srt = serializeSrt([{ startTime: 0, endTime: 3, text: long }]);
+  const lines = srt.trim().split('\n').slice(2);
+  assert.equal(lines.length, 2);
+  assert.equal(lines.join(''), long);
+});
+
+test('a mostly Arabic or Hebrew subtitle line is marked right to left, and reads back without the mark', () => {
+  const srt = serializeSrt([{ startTime: 0, endTime: 2, text: 'iPhone הוא טלפון טוב.' }]);
+  assert.ok(srt.includes('‏iPhone הוא טלפון טוב.'));
+  assert.equal(parseSrt(srt)[0].text, 'iPhone הוא טלפון טוב.');
+  assert.ok(!serializeSrt([{ startTime: 0, endTime: 2, text: 'Hello there' }]).includes('‏'));
+});

@@ -14,16 +14,19 @@ export const MAX_TTS_CHUNK_CHARS = 1000;
 export const TTS_CONTEXT_CHARS = 300;
 
 /** Sentence-ending punctuation across the scripts DHVANI dubs into, plus trailing quotes. */
-const SENTENCE_END = /[.!?…।॥。！？؟]+["'”’)\]]*(?=\s)/gu;
+const SENTENCE_END = /[.!?…।॥。！？؟]+["'”’)\]」』]*(?=\s)|[。！？]+[」』”’)]*/gu;
 
 /** The same at the very end of a text. */
-const ENDS_SENTENCE = /[.!?…।॥。！？؟]+["'”’)\]]*$/u;
+const ENDS_SENTENCE = /[.!?…।॥。！？؟]+["'”’)\]」』]*$/u;
 
 /** True when `text` ends a sentence: its last mark is a full stop, danda, question or exclamation mark. */
 export const endsSentence = (text) => ENDS_SENTENCE.test(String(text ?? '').trimEnd());
 
 /** Scripts that end a sentence with a danda (।): Devanagari, Bengali/Assamese and Odia. */
 const DANDA_SCRIPT = /[ऀ-৿଀-୿]/u;
+
+/** Scripts that end a sentence with a full-width stop (。): Chinese and Japanese. */
+const WIDE_STOP_SCRIPT = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}ー]/u;
 
 /**
  * `text` as it should be sent to be voiced on its own: ending a sentence.
@@ -37,7 +40,8 @@ export const withSentenceEnd = (text) => {
   const bare = trimmed.replace(/[\s,;:،、\-–—]+$/u, '');
   if (!bare) return trimmed;
   const letters = bare.match(/\p{L}/gu);
-  const mark = letters && DANDA_SCRIPT.test(letters[letters.length - 1]) ? '।' : '.';
+  const last = letters ? letters[letters.length - 1] : '';
+  const mark = DANDA_SCRIPT.test(last) ? '।' : WIDE_STOP_SCRIPT.test(last) ? '。' : '.';
   return `${bare}${mark}`;
 };
 

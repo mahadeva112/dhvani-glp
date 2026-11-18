@@ -8,6 +8,9 @@
  * cue *text* only — see `retextCues`.
  */
 
+import { joinWords, splitWords, textWidth } from './wordSplit.js';
+import { markRtlLine, withoutDirectionMark } from './textDirection.js';
+
 export const DEFAULT_CUE_OPTIONS = {
   maxCharsPerCue: 84,
   maxWordsPerCue: 14,
@@ -75,10 +78,8 @@ export const buildCuesFromWords = (words, options = {}) => {
       startTime: current.words[0].start,
       endTime: current.words[current.words.length - 1].end,
       speaker: current.speaker || 'Speaker',
-      text: current.words
-        .map((word) => word.text)
-        .join(' ')
-        .replace(/\s+([,.;:!?])/g, '$1'),
+      // Chinese, Japanese and Thai words are written together, with no space between them.
+      text: joinWords(current.words.map((word) => word.text)).replace(/\s+([,.;:!?])/g, '$1'),
       words: current.words.map(({ text, start, end }) => ({ text, start, end })),
     });
     current = null;
@@ -86,13 +87,14 @@ export const buildCuesFromWords = (words, options = {}) => {
 
   for (const word of spoken) {
     if (!current) {
-      current = { words: [word], speaker: word.speaker, chars: word.text.length };
+      current = { words: [word], speaker: word.speaker, chars: textWidth(word.text) };
       continue;
     }
 
     const previous = current.words[current.words.length - 1];
     const gap = word.start - previous.end;
-    const prospectiveChars = current.chars + 1 + word.text.length;
+    // Width, not characters: a Chinese or Japanese character takes two places on screen.
+    const prospectiveChars = current.chars + 1 + textWidth(word.text);
     const prospectiveDuration = word.end - current.words[0].start;
 
     const speakerChanged =
@@ -110,7 +112,7 @@ export const buildCuesFromWords = (words, options = {}) => {
 
     if (mustBreak) {
       flush();
-      current = { words: [word], speaker: word.speaker, chars: word.text.length };
+      current = { words: [word], speaker: word.speaker, chars: textWidth(word.text) };
     } else {
       current.words.push(word);
       current.chars = prospectiveChars;
@@ -138,17 +140,15 @@ export const formatSrtTimestamp = (seconds) => {
 
 /** Wraps a cue's text onto at most `maxLines` lines without touching timing. */
 const wrapText = (text, maxCharsPerLine = 42, maxLines = 2) => {
-  const words = String(text || '')
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean);
+  // Chinese, Japanese and Thai have no spaces to wrap at: their words come from the segmenter.
+  const words = splitWords(text);
   if (words.length === 0) return '';
 
   const lines = [];
   let line = '';
   for (const word of words) {
-    const candidate = line ? `${line} ${word}` : word;
-    if (line && candidate.length > maxCharsPerLine && lines.length < maxLines - 1) {
+    const candidate = line ? joinWords([line, word]) : word;
+    if (line && textWidth(candidate) > maxCharsPerLine && lines.length < maxLines - 1) {
       lines.push(line);
       line = word;
     } else {
@@ -156,7 +156,8 @@ const wrapText = (text, maxCharsPerLine = 42, maxLines = 2) => {
     }
   }
   if (line) lines.push(line);
-  return lines.slice(0, maxLines).join('\n');
+  // A mostly Arabic, Hebrew or Persian line is marked right to left, so a Latin word at its start can't flip it.
+  return lines.slice(0, maxLines).map(markRtlLine).join('\n');
 };
 
 /**
@@ -223,7 +224,10 @@ export const parseSrt = (srt) => {
 
   const cues = [];
   for (const block of blocks) {
-    const lines = block.split('\n').filter((line) => line.trim().length > 0);
+    const lines = block
+      .split('\n')
+      .map(withoutDirectionMark)
+      .filter((line) => line.trim().length > 0);
     if (lines.length < 2) continue;
 
     const timingLineIndex = lines.findIndex((line) => line.includes('-->'));

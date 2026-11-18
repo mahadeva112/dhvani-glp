@@ -1,5 +1,6 @@
 import type { AudioSegment, EditedSubtitle } from '../types';
 import { GAP_CLOSE_SECONDS, vlen, wrapBalanced } from './subtitleCues.ts';
+import { markRtlLine } from '../server/lib/textDirection.js';
 
 /*
  * Subtitles edited by hand in Export subtitles. Editing starts from the
@@ -46,11 +47,13 @@ export const parseStampInput = (input: string): number | null => {
 const kept = (cues: EditedSubtitle[]) =>
   cues.filter((c) => c.text.trim() && c.end > c.start).sort((a, b) => a.start - b.start);
 
+// A mostly Arabic, Hebrew or Persian line is marked right to left, so a Latin word at its start can't flip it.
 const body = (text: string) =>
   text
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter(Boolean)
+    .map(markRtlLine)
     .join('\n');
 
 export const editedSrt = (cues: EditedSubtitle[]): string =>

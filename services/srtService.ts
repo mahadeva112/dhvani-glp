@@ -1,6 +1,8 @@
 import { AudioSegment, SubtitleConfiguration, WordTimestamp } from "../types";
 import { buildScriptFile } from "./scriptShare";
 import { buildCues, sanitizeCues, CueBudget, TimedCue, TimedWord } from "./subtitleCues";
+import { joinWords, splitWords, wordsLike } from "../server/lib/wordSplit.js";
+import { markRtlLines } from "../server/lib/textDirection.js";
 
 /* ------------------------------------------------------------------ */
 /* Types & Defaults                                                    */
@@ -220,8 +222,8 @@ export const resegmentByWordTimestamps = (
         endTime: end,
         duration: Math.max(0.05, end - start),
         speaker: segment.speaker,
-        textSource: bucket.map((word) => word.text).join(' '),
-        textTarget: bucket.map((word) => word.text).join(' '),
+        textSource: joinWords(bucket.map((word) => word.text)),
+        textTarget: joinWords(bucket.map((word) => word.text)),
         words: [...bucket],
         timingSource: 'elevenlabs',
       });
@@ -299,7 +301,7 @@ export const generateSrtContent = (
      */
     const measured: WordTimestamp[] = segment.words || [];
     const spoken = config.removeSpeakerLabel !== false ? cleanSpeakerLabels(rawText) : rawText.trim();
-    const tokens = spoken.split(/\s+/).filter(Boolean);
+    const tokens: string[] = wordsLike(spoken, measured.map((word) => word.text));
     if (measured.length > 0 && tokens.length === measured.length) {
       tokens.forEach((token, i) => {
         const text = normalizeSubtitleText(token, wordDisplayOptions);
@@ -324,7 +326,7 @@ export const generateSrtContent = (
     const segmentDuration = Math.max(0.2, segment.endTime - segment.startTime);
 
     /* ---------------- Split into words ---------------- */
-    const words = text.split(/\s+/).filter(Boolean);
+    const words: string[] = splitWords(text);
     if (!words.length) continue;
 
     /* ---------------- Build subtitle lines based on maxWords & maxChars ---------------- */
@@ -340,7 +342,7 @@ export const generateSrtContent = (
         currentLineWords.length > 0 &&
         (prospectiveWordCount > maxWords || prospectiveChars > maxChars)
       ) {
-        lines.push(currentLineWords.join(' '));
+        lines.push(joinWords(currentLineWords));
         currentLineWords = [word];
         currentLineChars = word.length;
       } else {
@@ -349,7 +351,7 @@ export const generateSrtContent = (
       }
     }
     if (currentLineWords.length > 0) {
-      lines.push(currentLineWords.join(' '));
+      lines.push(joinWords(currentLineWords));
     }
 
     /* ---------------- Group lines into cues based on maxLinesPerCue ---------------- */
@@ -372,7 +374,7 @@ export const generateSrtContent = (
     for (let i = 0; i < groups.length; i++) {
       const cueLines = groups[i];
       const cueWordCount = cueLines.reduce(
-        (sum, line) => sum + line.split(/\s+/).filter(Boolean).length,
+        (sum, line) => sum + splitWords(line).length,
         0
       );
 
@@ -394,7 +396,7 @@ export const generateSrtContent = (
   flushRun();
 
   return sanitizeCues(cues)
-    .map((cue, i) => `${i + 1}\n${formatSrtTime(cue.start)} --> ${formatSrtTime(cue.end)}\n${cue.text}`)
+    .map((cue, i) => `${i + 1}\n${formatSrtTime(cue.start)} --> ${formatSrtTime(cue.end)}\n${markRtlLines(cue.text)}`)
     .join('\n\n')
     .trim();
 };
@@ -411,8 +413,8 @@ export const measuredSubtitleWords = (segments: AudioSegment[], options: Partial
   for (const segment of segments) {
     const rawText = segment.textTarget || segment.targetText || segment.textSource || segment.text || '';
     const spoken = config.removeSpeakerLabel !== false ? cleanSpeakerLabels(rawText) : rawText.trim();
-    const words = spoken.split(/\s+/).filter(Boolean);
     const measured = segment.words || [];
+    const words: string[] = wordsLike(spoken, measured.map((word) => word.text));
     if (measured.length === 0 || words.length !== measured.length) continue;
     words.forEach((word, i) => {
       if (!normalizeSubtitleText(word, display)) return;

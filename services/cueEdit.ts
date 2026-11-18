@@ -1,4 +1,5 @@
 import type { AudioSegment, WordTimestamp } from '../types';
+import { joinWords, splitWords, wordsLike } from '../server/lib/wordSplit.js';
 
 /*
  * Splitting and joining cues by hand on the Review step.
@@ -31,7 +32,8 @@ const BREAK_AFTER = /[,.;:!?…।॥，。！？؟]["'”’)\]]*$/u;
 export const sourceTextOf = (segment: AudioSegment) => String(segment.textSource || segment.originalText || '').trim();
 export const targetTextOf = (segment: AudioSegment) => String(segment.textTarget || segment.targetText || '').trim();
 
-const wordsOf = (text: string) => text.split(/\s+/).filter(Boolean);
+// Chinese, Japanese and Thai lines are cut into their words too, though they have no spaces.
+const wordsOf = (text: string): string[] => splitWords(text);
 
 /**
  * The cue's words with their times: the measured ones when the cue has word
@@ -39,7 +41,7 @@ const wordsOf = (text: string) => text.split(/\s+/).filter(Boolean);
  */
 export const cueTokens = (segment: AudioSegment): { tokens: CueToken[]; measured: boolean } => {
   const measured = (segment.words || []).filter((word) => word.text && Number.isFinite(word.start) && Number.isFinite(word.end));
-  const words = wordsOf(sourceTextOf(segment));
+  const words: string[] = wordsLike(sourceTextOf(segment), measured.map((word) => word.text));
   // Timings that no longer match the text word for word (it was edited) would cut it as transcribed, losing the edit.
   if (measured.length > 0 && (words.length === 0 || words.length === measured.length)) {
     return { tokens: measured.map(({ text, start, end }) => ({ text, start, end })), measured: true };
@@ -61,7 +63,7 @@ export const cueTokens = (segment: AudioSegment): { tokens: CueToken[]; measured
  * as transcribed when the text was emptied.
  */
 const sourceWords = (segment: AudioSegment, tokens: CueToken[]) => {
-  const words = wordsOf(sourceTextOf(segment));
+  const words: string[] = wordsLike(sourceTextOf(segment), tokens.map((token) => token.text));
   return words.length === tokens.length ? words : tokens.map((token) => token.text);
 };
 
@@ -147,7 +149,7 @@ export const splitCue = (segment: AudioSegment, k: number, newId: string | numbe
   const secondStart = measured ? secondTokens[0].start : firstEnd;
 
   const first = timed(
-    withText(segment, source.slice(0, k).join(' '), dub.slice(0, dubCut).join(' ')),
+    withText(segment, joinWords(source.slice(0, k)), joinWords(dub.slice(0, dubCut))),
     firstTokens,
     measured,
     segment.startTime,
@@ -155,7 +157,7 @@ export const splitCue = (segment: AudioSegment, k: number, newId: string | numbe
   );
   const { dubTargetSeconds: _trim, dubPlace: _place, ...rest } = segment;
   const second = timed(
-    withText({ ...rest, id: newId }, source.slice(k).join(' '), dub.slice(dubCut).join(' ')),
+    withText({ ...rest, id: newId }, joinWords(source.slice(k)), joinWords(dub.slice(dubCut))),
     secondTokens,
     measured,
     secondStart,
@@ -173,7 +175,7 @@ export const splitCue = (segment: AudioSegment, k: number, newId: string | numbe
 
 /** Joins a cue with the one after it, under the first cue's id. */
 export const joinCues = (first: AudioSegment, second: AudioSegment): AudioSegment => {
-  const join = (a: string, b: string) => [a, b].filter(Boolean).join(' ');
+  const join = (a: string, b: string) => joinWords([a, b]);
   // Word timings are kept only when both cues have them; a half-timed list would mislead.
   const measured = (first.words?.length ?? 0) > 0 && (second.words?.length ?? 0) > 0;
   return {
@@ -200,8 +202,8 @@ export const moveCut = (first: AudioSegment, second: AudioSegment, k: number): [
   const firstEnd = tokens[k - 1].end;
   const secondStart = measured ? tokens[k].start : firstEnd;
   return [
-    timed(withText(first, source.slice(0, k).join(' '), targetTextOf(first)), tokens.slice(0, k), measured, first.startTime, firstEnd),
-    timed(withText(second, source.slice(k).join(' '), targetTextOf(second)), tokens.slice(k), measured, secondStart, second.endTime),
+    timed(withText(first, joinWords(source.slice(0, k)), targetTextOf(first)), tokens.slice(0, k), measured, first.startTime, firstEnd),
+    timed(withText(second, joinWords(source.slice(k)), targetTextOf(second)), tokens.slice(k), measured, secondStart, second.endTime),
   ];
 };
 
@@ -210,7 +212,7 @@ export const moveDubBreak = (first: AudioSegment, second: AudioSegment, k: numbe
   const dub = [...wordsOf(targetTextOf(first)), ...wordsOf(targetTextOf(second))];
   const cut = Math.min(dub.length, Math.max(0, k));
   return [
-    withText(first, sourceTextOf(first), dub.slice(0, cut).join(' ')),
-    withText(second, sourceTextOf(second), dub.slice(cut).join(' ')),
+    withText(first, sourceTextOf(first), joinWords(dub.slice(0, cut))),
+    withText(second, sourceTextOf(second), joinWords(dub.slice(cut))),
   ];
 };

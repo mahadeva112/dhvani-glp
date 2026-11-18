@@ -220,3 +220,17 @@
 .cut-dot { animation: cut-dot-in 160ms ease-out both; }
 .cut-dot.cut-dot-pause { animation: cut-dot-in 160ms ease-out both, cut-dot-pause 1.6s ease-in-out 160ms infinite; }
 @media (prefers-reduced-motion: reduce) { .cut-dot, .cut-dot.cut-dot-pause { animation: none; } }
+
+/*
+ * Right-to-left dubs (Arabic, Hebrew, Persian): every text box, and every line
+ * of script on Review, takes its direction from its own text, so an Arabic
+ * line runs right to left while an English one beside it stays left to right.
+ */
+textarea,
+input[type='text'],
+input[type='search'],
+input:not([type]),
+[contenteditable],
+[data-review-text] {
+  unicode-bidi: plaintext;
+}

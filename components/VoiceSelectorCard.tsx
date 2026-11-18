@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { Voice } from '../services/elevenLabsService';
 import { useFavoriteVoices } from '../services/favoriteVoicesService';
-import { isIndianVoice, languageFit } from '../services/indianVoices';
+import { isIndianLanguage, isIndianVoice, languageFit } from '../services/indianVoices';
 
 export interface VoiceItem {
   id: string;
@@ -544,7 +544,9 @@ export const VoiceSelectorCard: React.FC<VoiceSelectorCardProps> = ({
 
   const indianCount = useMemo(() => allVoices.filter((v) => v.indian).length, [allVoices]);
   // With no Indian voices in the library (or only the built-in list), the filter would empty the list.
-  const showIndianOnly = indianOnly && indianCount > 0;
+  // Only an Indian-language dub starts on Indian voices: a French dub wants the whole library.
+  const indianDub = isIndianLanguage(targetLanguage);
+  const showIndianOnly = indianDub && indianOnly && indianCount > 0;
 
   useEffect(() => {
     try {
@@ -1094,7 +1096,7 @@ export const VoiceSelectorCard: React.FC<VoiceSelectorCardProps> = ({
           ))}
         </div>
 
-        {indianCount > 0 && (
+        {indianDub && indianCount > 0 && (
           <button
             type="button"
             role="switch"

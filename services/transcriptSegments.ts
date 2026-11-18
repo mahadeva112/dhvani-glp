@@ -1,5 +1,6 @@
 import type { AudioSegment, WordTimestamp } from '../types';
 import { suggestDubBreak } from './cueEdit.ts';
+import { hasNoSpaceScript, splitWords } from '../server/lib/wordSplit.js';
 
 /*
  * Splitting and merging the transcript's segments on the transcript screen,
@@ -30,7 +31,16 @@ export interface TextWord {
 
 /** The text's words: its runs of non-space characters. */
 export const textWords = (text: string): TextWord[] =>
-  [...text.matchAll(/\S+/gu)].map((m) => ({ text: m[0], from: m.index!, to: m.index! + m[0].length }));
+  [...text.matchAll(/\S+/gu)].flatMap((m) => {
+    if (!hasNoSpaceScript(m[0])) return [{ text: m[0], from: m.index!, to: m.index! + m[0].length }];
+    // Chinese, Japanese or Thai: the run between spaces holds several words, cut by the segmenter.
+    let from = m.index!;
+    return splitWords(m[0]).map((piece: string) => {
+      const word = { text: piece, from, to: from + piece.length };
+      from = word.to;
+      return word;
+    });
+  });
 
 /** The text in two at the whitespace before its word `k`; only that whitespace goes. */
 const cutText = (text: string, k: number): [string, string] | null => {

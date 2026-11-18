@@ -1,4 +1,5 @@
 import { lettersOf } from './dubTakes.js';
+import { splitWords } from './wordSplit.js';
 
 /**
  * Word timings for the dub's subtitles, from ElevenLabs forced alignment.
@@ -6,20 +7,15 @@ import { lettersOf } from './dubTakes.js';
  * `words` are the aligner's `[{ text, start, end }]` for the whole dub;
  * `cues` are `[{ id, text }]` in the order the dub says them. Returns
  * `[{ id, words: [{ text, start, end }] }]` with exactly one timed entry per
- * whitespace token of each cue's text, so the app can cut subtitles on the
+ * word of each cue's text (splitWords), so the app can cut subtitles on the
  * dub's real word boundaries. Matching is letter by letter, so spacing and
  * punctuation never matter. Returns null when the aligned words do not spell
  * out the script — the dub says something else, and no timing is better than
  * a wrong one.
  */
 export const wordTimesForCues = (words, cues) => {
-  const tokens = cues.map((cue) =>
-    String(cue.text || '')
-      .trim()
-      .split(/\s+/)
-      .filter(Boolean)
-      .map((text) => ({ text, start: null, end: null }))
-  );
+  // Chinese, Japanese and Thai lines are cut into their words, so their subtitles can break between them too.
+  const tokens = cues.map((cue) => splitWords(cue.text).map((text) => ({ text, start: null, end: null })));
 
   const owner = [];
   let script = '';

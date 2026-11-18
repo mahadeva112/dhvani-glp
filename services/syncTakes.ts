@@ -1,3 +1,4 @@
+import { joinWords, splitWords } from '../server/lib/wordSplit.js';
 import { basePart, keptCopies, measureEdits, moveCopyAudio, partsOf, partTime, spokenSpan, syncedParts, type SyncBank, type SyncBankLine, type SyncEditPart, type SyncEdits } from './syncEditModel.ts';
 import type { SyncReport, SyncUnitReport } from './syncService';
 
@@ -111,7 +112,7 @@ const round4 = (seconds: number) => Math.round(seconds * 10000) / 10000;
 const spokenToken = (token: string) => /[\p{L}\p{N}]/u.test(token);
 
 /** The words a line's text says, as takes count them. */
-export const sayWords = (text: string) => text.split(/\s+/).filter(spokenToken);
+export const sayWords = (text: string): string[] => splitWords(text).filter(spokenToken);
 
 /**
  * Sync's take's words, from its own forced alignment (the report's
@@ -166,20 +167,20 @@ export const knownWords = (take: SyncTake, unit: SyncUnitReport | undefined, sam
 };
 
 /** The words of a line, as the takes panel picks them. */
-export const wordsOf = (text: string) => text.split(/\s+/).filter(Boolean);
+export const wordsOf = (text: string): string[] => splitWords(text);
 
 /** A line's words split around the ones picked (`from` to `to`, inclusive). */
 export const phraseOf = (text: string, from: number, to: number) => {
   const words = wordsOf(text);
   const a = Math.max(0, Math.min(from, to));
   const b = Math.min(words.length - 1, Math.max(from, to));
-  return { before: words.slice(0, a).join(' '), words: words.slice(a, b + 1).join(' '), after: words.slice(b + 1).join(' ') };
+  return { before: joinWords(words.slice(0, a)), words: joinWords(words.slice(a, b + 1)), after: joinWords(words.slice(b + 1)) };
 };
 
 /** The line with `say` in place of the words picked (`from` to `to`): what a phrase take in other words says. */
 export const phraseLine = (text: string, from: number, to: number, say: string) => {
   const { before, after } = phraseOf(text, from, to);
-  return [before, say.trim(), after].filter(Boolean).join(' ');
+  return joinWords([before, say.trim(), after]);
 };
 
 /* ---------- The bank's WAV ---------- */

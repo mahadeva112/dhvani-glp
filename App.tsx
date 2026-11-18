@@ -870,7 +870,9 @@ export default function App() {
    */
   const [sourceLanguage, setSourceLanguage] = useState<string>(() => {
     try {
-      return localStorage.getItem('dhvani_source_language') ?? '';
+      // A language no longer offered (an Indian one, from before the list was global only) falls back to Auto detect.
+      const saved = localStorage.getItem('dhvani_source_language') ?? '';
+      return saved === 'English' || DEFAULT_LANGUAGES.some((l) => l.code === saved) ? saved : '';
     } catch {
       return '';
     }

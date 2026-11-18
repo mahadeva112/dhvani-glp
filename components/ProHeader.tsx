@@ -30,22 +30,49 @@ import { projectName } from '../services/projects';
 import type { CartesiaUsage, GatewayUsage } from '../services/usageService';
 
 /** The dub language a new install starts on. */
-export const DEFAULT_TARGET_LANGUAGE = 'Hindi';
+export const DEFAULT_TARGET_LANGUAGE = 'Spanish';
 
-export const DEFAULT_LANGUAGES = [
-  { code: 'Assamese', label: 'Assamese (অসমীয়া)' },
-  { code: 'Bengali', label: 'Bengali (বাংলা)' },
-  { code: 'Gujarati', label: 'Gujarati (ગુજરાતી)' },
-  { code: 'Hindi', label: 'Hindi (हिन्दी)' },
-  { code: 'Kannada', label: 'Kannada (ಕನ್ನಡ)' },
-  { code: 'Malayalam', label: 'Malayalam (മലയാളം)' },
-  { code: 'Marathi', label: 'Marathi (मराठी)' },
-  { code: 'Nepali', label: 'Nepali (नेपाली)' },
-  { code: 'Odia', label: 'Odia (ଓଡ଼ିଆ)' },
-  { code: 'Punjabi', label: 'Punjabi (ਪੰਜਾਬੀ)' },
-  { code: 'Tamil', label: 'Tamil (தமிழ்)' },
-  { code: 'Telugu', label: 'Telugu (తెలుగు)' },
+/** The global dub languages DHVANI GLP is for. Each `code` is a name in server/lib/languages.js. */
+export const GLOBAL_LANGUAGES = [
+  { code: 'Arabic', label: 'Arabic (العربية)' },
+  { code: 'Bulgarian', label: 'Bulgarian (Български)' },
+  { code: 'Croatian', label: 'Croatian (Hrvatski)' },
+  { code: 'Czech', label: 'Czech (Čeština)' },
+  { code: 'Dutch', label: 'Dutch (Nederlands)' },
+  { code: 'Filipino', label: 'Filipino' },
+  { code: 'French', label: 'French (Français)' },
+  { code: 'Georgian', label: 'Georgian (ქართული)' },
+  { code: 'German', label: 'German (Deutsch)' },
+  { code: 'Greek', label: 'Greek (Ελληνικά)' },
+  { code: 'Hebrew', label: 'Hebrew (עברית)' },
+  { code: 'Hungarian', label: 'Hungarian (Magyar)' },
+  { code: 'Indonesian', label: 'Indonesian (Bahasa Indonesia)' },
+  { code: 'Italian', label: 'Italian (Italiano)' },
+  { code: 'Japanese', label: 'Japanese (日本語)' },
+  { code: 'Korean', label: 'Korean (한국어)' },
+  { code: 'Kurdish', label: 'Kurdish – Sorani (کوردی)' },
+  { code: 'Latvian', label: 'Latvian (Latviešu)' },
+  { code: 'Lithuanian', label: 'Lithuanian (Lietuvių)' },
+  { code: 'Macedonian', label: 'Macedonian (Македонски)' },
+  { code: 'Persian', label: 'Persian (فارسی)' },
+  { code: 'Polish', label: 'Polish (Polski)' },
+  { code: 'Portuguese', label: 'Portuguese (Português)' },
+  { code: 'Romanian', label: 'Romanian (Română)' },
+  { code: 'Russian', label: 'Russian (Русский)' },
+  { code: 'Serbian', label: 'Serbian (Srpski)' },
+  { code: 'Simplified Chinese', label: 'Simplified Chinese (简体中文)' },
+  { code: 'Slovak', label: 'Slovak (Slovenčina)' },
+  { code: 'Slovenian', label: 'Slovenian (Slovenščina)' },
+  { code: 'Spanish', label: 'Spanish (Español)' },
+  { code: 'Thai', label: 'Thai (ไทย)' },
+  { code: 'Traditional Chinese', label: 'Traditional Chinese (繁體中文)' },
+  { code: 'Turkish', label: 'Turkish (Türkçe)' },
+  { code: 'Ukrainian', label: 'Ukrainian (Українська)' },
+  { code: 'Vietnamese', label: 'Vietnamese (Tiếng Việt)' },
 ];
+
+/** The languages offered to transcribe from and dub into: the global ones only, as Dhvani itself serves the Indian languages. */
+export const DEFAULT_LANGUAGES = GLOBAL_LANGUAGES;
 
 /** Something running on the active job, for the status pill and the progress line. */
 export interface HeaderActivity {

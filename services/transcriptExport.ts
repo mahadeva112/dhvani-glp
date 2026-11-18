@@ -1,5 +1,6 @@
 import type { AudioSegment } from '../types';
 import { sourceOf, timingProblems, type TimingProblem } from './transcriptSegments.ts';
+import { markRtlLines } from '../server/lib/textDirection.js';
 
 /*
  * The transcript as text files, from the transcript screen: running
@@ -73,7 +74,7 @@ export const transcriptSrt = (segments: AudioSegment[]): SrtResult => {
   const content = cues
     .map((seg, i) => {
       const text = sourceOf(seg).trim().replace(/\r\n?/gu, '\n').replace(/\n\s*\n+/gu, '\n');
-      return `${i + 1}\n${srtTime(seg.startTime)} --> ${srtTime(seg.endTime)}\n${text}\n`;
+      return `${i + 1}\n${srtTime(seg.startTime)} --> ${srtTime(seg.endTime)}\n${markRtlLines(text)}\n`;
     })
     .join('\n');
   return { kind: 'ready', content, count: cues.length };

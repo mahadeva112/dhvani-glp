@@ -12,6 +12,7 @@ import {
   Plus
 } from 'lucide-react';
 import {
+  findIndicLanguageConfig,
   getIndicLanguageConfig,
   getPhoneticSuggestions,
   transliterateWordOffline,
@@ -62,8 +63,10 @@ export const PhoneticSmartTextarea: React.FC<PhoneticSmartTextareaProps> = ({
   fontSize,
   autoGrow = false,
 }) => {
+  // Phonetic typing, AI polish and the sign keys are for the Indian scripts: a French or Arabic line is typed as it is.
+  const indic = !!findIndicLanguageConfig(language);
   // Enabled state for phonetic auto-transliteration (persisted or on by default)
-  const isPhoneticOn = usePhoneticSwitch();
+  const isPhoneticOn = usePhoneticSwitch() && indic;
   const [currentWord, setCurrentWord] = useState<string>('');
   const [suggestions, setSuggestions] = useState<string[]>([]);
   // The Roman word the current suggestions were fetched for. Typing outruns the
@@ -391,10 +394,11 @@ export const PhoneticSmartTextarea: React.FC<PhoneticSmartTextareaProps> = ({
         }`}
       >
         <div className="flex items-center gap-1 flex-wrap">
-          <span className="px-1.5 py-0.5 text-[11px] text-slate-400" title={`Typing in ${langConfig.name}`}>
-            {langConfig.nativeName}
+          <span className="px-1.5 py-0.5 text-[11px] text-slate-400" title={`Typing in ${indic ? langConfig.name : language}`}>
+            {indic ? langConfig.nativeName : language}
           </span>
 
+          {indic && (
           <button
             type="button"
             onClick={handleTogglePhonetic}
@@ -407,8 +411,10 @@ export const PhoneticSmartTextarea: React.FC<PhoneticSmartTextareaProps> = ({
             <Keyboard className="w-3 h-3" />
             Phonetic {isPhoneticOn ? 'on' : 'off'}
           </button>
+          )}
 
           {/* AI Polish is opt-in per cue */}
+          {indic && (
           <button
             type="button"
             onClick={() => setIsAiPolishOn((on) => !on)}
@@ -421,8 +427,9 @@ export const PhoneticSmartTextarea: React.FC<PhoneticSmartTextareaProps> = ({
             <CheckCheck className="w-3 h-3" />
             AI polish {isAiPolishOn ? 'on' : 'off'}
           </button>
+          )}
 
-          {isAiPolishOn && (
+          {indic && isAiPolishOn && (
             <button
               type="button"
               onClick={handlePolishWithAI}
@@ -452,7 +459,7 @@ export const PhoneticSmartTextarea: React.FC<PhoneticSmartTextareaProps> = ({
             </button>
           )}
 
-          {showQuickSymbols && (
+          {showQuickSymbols && indic && (
             <button
               type="button"
               onClick={() => setShowSymbols(!showSymbols)}
@@ -468,7 +475,7 @@ export const PhoneticSmartTextarea: React.FC<PhoneticSmartTextareaProps> = ({
           )}
         </div>
 
-        {onOpenKeyboardModal && (
+        {onOpenKeyboardModal && indic && (
           <button
             type="button"
             onClick={onOpenKeyboardModal}
@@ -482,7 +489,7 @@ export const PhoneticSmartTextarea: React.FC<PhoneticSmartTextareaProps> = ({
       </div>
 
       {/* Quick Symbols Mini Drawer */}
-      {showQuickSymbols && showSymbols && (
+      {showQuickSymbols && showSymbols && indic && (
         <div className="p-1.5 bg-slate-100 dark:bg-slate-900 border border-indigo-500/40 rounded-lg flex items-center gap-1.5 flex-wrap animate-in fade-in zoom-in-95 duration-100 text-xs">
           <span className="text-[9px] font-mono text-slate-500 dark:text-slate-400 uppercase font-bold px-1">
             Insert:
@@ -526,6 +533,7 @@ export const PhoneticSmartTextarea: React.FC<PhoneticSmartTextareaProps> = ({
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={handleKeyDown}
           onKeyUp={handleKeyUp}
+          dir="auto"
           rows={rows}
           style={fontSize ? { fontSize: `${fontSize}px` } : undefined}
           placeholder={

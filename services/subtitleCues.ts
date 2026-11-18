@@ -16,6 +16,7 @@
  * minimum, short silences bridged so captions do not flicker).
  */
 import { BIND_BACK, BIND_FWD, VERB_END } from './subtitleGrammarData.ts';
+import { joinWords, splitWords } from '../server/lib/wordSplit.js';
 
 export interface TimedWord {
   /** Text as it will be displayed (casing / punctuation options applied). */
@@ -53,10 +54,13 @@ const JOINING_VIRAMA = new Set([0x094d, 0x09cd, 0x0a4d, 0x0acd, 0x0b4d, 0x0d4d])
 const STACKING_VIRAMA = new Set([0x0c4d, 0x0ccd]);
 const MARK = /[\p{Mn}\p{Mc}\p{Cf}]/u;
 const LETTER = /\p{L}/u;
+const WIDE = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\u3000-\u303F\uFF00-\uFF60ー]/u;
 
 /** Visual length in aksharas / grapheme clusters, not code points. */
 export const vlen = (text: string): number => {
   let n = 0;
+  // A Chinese, Japanese or Korean character takes two places on screen.
+  for (const ch of text) if (WIDE.test(ch)) n += 1;
   let link = 0; // pending virama: 0 none, 1 horizontal join, 2 vertical stack
   for (const ch of text) {
     if (MARK.test(ch)) {
@@ -288,7 +292,8 @@ const bestCut = (buf: TimedWord[], nextRaw: string, nextStart: number, cap: numb
 /* Line wrapping                                                       */
 /* ------------------------------------------------------------------ */
 
-const joinText = (words: TimedWord[]) => words.map((word) => word.text).join(' ');
+// Chinese, Japanese and Thai words are written together, with no space between them.
+const joinText = (words: TimedWord[]) => joinWords(words.map((word) => word.text));
 
 const lineFits = (line: TimedWord[], budget: CueBudget) =>
   vlen(joinText(line)) <= budget.maxCharsPerLine &&
@@ -342,13 +347,13 @@ const LW_PHRASE = 15; // bonus: the line ends on a phrase-completing word
 const LINE_TILT = 0.15;
 
 export const wrapBalanced = (text: string, maxChars: number, maxLines: number): string => {
-  const words = text.split(/\s+/).filter(Boolean);
+  const words = splitWords(text);
   if (words.length === 0) return '';
   const lens = words.map(vlen);
   const total = lens.reduce((a, b) => a + b, 0) + words.length - 1;
   const needed = Math.ceil(total / Math.max(1, maxChars));
   const n = Math.min(Math.max(1, maxLines), words.length, Math.max(needed, Math.floor(total / MIN_LINE_CHARS), 1));
-  if (n <= 1) return words.join(' ');
+  if (n <= 1) return joinWords(words);
 
   const nw = words.length;
   const starts = [0];
@@ -402,7 +407,7 @@ export const wrapBalanced = (text: string, maxChars: number, maxLines: number): 
       bestCost = cost;
     }
   }
-  return best.map(([i, j]) => words.slice(i, j).join(' ')).join('\n');
+  return best.map(([i, j]) => joinWords(words.slice(i, j))).join('\n');
 };
 
 /** Would these words lay out within the line budget without overflowing? */
@@ -616,7 +621,7 @@ export const buildCues = (words: TimedWord[], budget: CueBudget): TimedCue[] => 
       }
     }
 
-    const prospectiveLen = vlen([...buf.map((entry) => entry.text), text].join(' '));
+    const prospectiveLen = vlen(joinWords([...buf.map((entry) => entry.text), text]));
     const dur = we - (start ?? ws);
     const tooLong = prospectiveLen > cap;
     const tooLongDur = buf.length > 0 && dur > maxSecs;

@@ -12,6 +12,7 @@
 import { stripTags } from './lineTags.js';
 import { stripPauses } from './linePauses.js';
 import { quietestPoint } from './dubTakes.js';
+import { hasNoSpaceScript, splitWords } from './wordSplit.js';
 
 /** Sound above this is speech (as syncRender.js reads a clip). */
 const SPEECH_LEVEL = 0.0032;
@@ -23,7 +24,7 @@ const QUIET_WINDOW_SECONDS = 0.01;
 const spoken = (token) => /[\p{L}\p{N}]/u.test(token);
 
 /** The words `text` says, as a dub line counts them: tags, pause marks and lone punctuation left out. */
-export const sayWords = (text) => stripTags(stripPauses(String(text || ''))).split(/\s+/).filter(spoken);
+export const sayWords = (text) => splitWords(stripTags(stripPauses(String(text || '')))).filter(spoken);
 
 /**
  * The words of `text`, `{ start, end }` seconds into the audio, from the
@@ -38,8 +39,22 @@ export const wordsFromAlignment = (alignment, text) => {
   const words = [];
   let word = null;
   let inside = null;
+  const push = (text, start, end) => {
+    if (spoken(text)) words.push({ start, end: Math.max(start, end) });
+  };
   const close = () => {
-    if (word && spoken(word.text)) words.push({ start: word.start, end: Math.max(word.start, word.end) });
+    if (!word) return;
+    if (!hasNoSpaceScript(word.text)) push(word.text, word.start, word.end);
+    else {
+      // Chinese, Japanese or Thai: the run between spaces holds several words, each timed by its own characters.
+      let at = 0;
+      for (const piece of splitWords(word.text)) {
+        const first = word.chars.findIndex((c) => c.at >= at);
+        at += piece.length;
+        const last = word.chars.findLastIndex((c) => c.at < at);
+        if (first >= 0 && last >= first) push(piece, word.chars[first].start, word.chars[last].end);
+      }
+    }
     word = null;
   };
   characters.forEach((ch, i) => {
@@ -54,7 +69,8 @@ export const wordsFromAlignment = (alignment, text) => {
     }
     if (/\s/.test(ch)) return close();
     if (!Number.isFinite(starts[i]) || !Number.isFinite(ends[i])) return;
-    if (!word) word = { text: '', start: starts[i], end: ends[i] };
+    if (!word) word = { text: '', start: starts[i], end: ends[i], chars: [] };
+    word.chars.push({ at: word.text.length, start: starts[i], end: ends[i] });
     word.text += ch;
     word.end = ends[i];
   });

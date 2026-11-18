@@ -2,7 +2,8 @@ import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 're
 import { CheckCheck, Keyboard, Languages, Loader2, Pause, Play } from 'lucide-react';
 import { AudioSegment } from '../../types';
 import { scrollWithin } from '../scrollWithin';
-import { SCRIPT_PALETTES, getIndicLanguageConfig, transliterateTextSmart, transliterateWordOffline } from '../../services/indicTransliteration';
+import { SCRIPT_PALETTES, findIndicLanguageConfig, getIndicLanguageConfig, transliterateTextSmart, transliterateWordOffline } from '../../services/indicTransliteration';
+import { isRtlLanguage } from '../../server/lib/languages.js';
 import { polishIndicDialogueWithAI } from '../../services/geminiService';
 import { buildScriptParagraphs } from './passages';
 import { usePhoneticTyping, type PhoneticField } from './usePhoneticTyping';
@@ -149,6 +150,9 @@ export function ScriptTableView({
   const autosave = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const phonetic = usePhoneticTyping(targetLanguage);
   const langConfig = getIndicLanguageConfig(targetLanguage);
+  // Phonetic typing, AI polish, the keyboard and the signs are for the Indian scripts only.
+  const indic = !!findIndicLanguageConfig(targetLanguage);
+  const rtl = isRtlLanguage(targetLanguage);
   const palette = SCRIPT_PALETTES[langConfig.script] || SCRIPT_PALETTES.Devanagari;
   const signs = [...palette.matras, langConfig.purnaViram || '।', '॥', '₹'];
 
@@ -529,6 +533,7 @@ export function ScriptTableView({
           title={`Save as a Word file: the script in paragraphs, ${sourceLanguage || 'the original'} on the left, ${targetLanguage || 'the dub'} on the right`}
         />
         {wordError && <span className="text-rose-300">{wordError}</span>}
+        {indic && (
         <button
           type="button"
           onClick={phonetic.toggle}
@@ -541,6 +546,7 @@ export function ScriptTableView({
           <Keyboard className="w-3 h-3" />
           Phonetic {phonetic.enabled ? langConfig.nativeName : 'off'}
         </button>
+        )}
       </div>
       <div className="p-3 sm:p-4">
         <table className="w-full table-fixed border-collapse text-slate-200" style={{ fontSize: `${fontSize}px` }}>
@@ -606,7 +612,7 @@ export function ScriptTableView({
                     </div>
                   </td>
                   <td className="border border-slate-700/70 align-top text-slate-400">{sourceParagraph(cues)}</td>
-                  <td className="border border-slate-700/70 align-top text-slate-100">{dubParagraph(cues, paces, passage.index + 1)}</td>
+                  <td className="border border-slate-700/70 align-top text-slate-100" dir={rtl ? 'rtl' : undefined}>{dubParagraph(cues, paces, passage.index + 1)}</td>
                 </tr>
               );
             })}
@@ -643,6 +649,7 @@ export function ScriptTableView({
               Convert all
             </button>
           )}
+          {indic && (
           <button
             type="button"
             tabIndex={-1}
@@ -657,7 +664,8 @@ export function ScriptTableView({
             <CheckCheck className="w-3 h-3" />
             AI polish {aiPolishOn ? 'on' : 'off'}
           </button>
-          {aiPolishOn && (
+          )}
+          {indic && aiPolishOn && (
             <button
               type="button"
               tabIndex={-1}
@@ -675,7 +683,7 @@ export function ScriptTableView({
               )}
             </button>
           )}
-          {onOpenKeyboard && (
+          {onOpenKeyboard && indic && (
             <button
               type="button"
               tabIndex={-1}
@@ -693,8 +701,8 @@ export function ScriptTableView({
             </button>
           )}
           {lineNote && <span className="mx-1 text-[11px] text-emerald-300">{lineNote}</span>}
-          <span className="mx-1.5 text-[11px] text-slate-500">Signs</span>
-          {signs.map((sign) => (
+          {indic && <span className="mx-1.5 text-[11px] text-slate-500">Signs</span>}
+          {indic && signs.map((sign) => (
             <button
               key={sign}
               type="button"

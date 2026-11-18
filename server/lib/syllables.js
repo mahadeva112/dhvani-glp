@@ -61,20 +61,43 @@ const brahmicSyllables = (word, base) => {
   return Math.max(1, units.length);
 };
 
-/** Syllables in one word, in any script: Brahmic by its letters, Latin by vowel groups, others roughly. */
+/** Lower case without accents or hooks. */
+const unaccented = (word) => word.toLowerCase().normalize('NFD').replace(/\p{M}+/gu, '');
+/** A Latin word as plain a to z: accents off, and the letters that have no plain form spelt out. */
+const latinBase = (word) =>
+  unaccented(word)
+    .replace(/ı/g, 'i')
+    .replace(/[øœ]/g, 'o')
+    .replace(/æ/g, 'ae')
+    .replace(/[^a-z]/g, '');
+/** Letters said as one syllable each: Han, kana, Hangul, and the long-vowel mark ー. */
+const CHARACTER_SYLLABLES = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}ー]/u;
+/** Small kana that join the kana before them into one syllable. */
+const SMALL_KANA = /[ぁぃぅぇぉゃゅょゎァィゥェォャュョヮ]/u;
+
+/** Syllables in one word, in any script: Brahmic by its letters, Latin, Cyrillic, Greek and Georgian by vowels, CJK by characters, others roughly. */
 export const syllablesIn = (word) => {
   const first = [...word].find((ch) => /\p{L}/u.test(ch));
   if (!first) return 0;
   const base = blockOf(first);
   if (base !== null) return brahmicSyllables(word, base);
   if (/\p{Script=Latin}/u.test(first)) {
-    const w = word.toLowerCase().replace(/[^a-z]/g, '');
+    // Accents and hooks come off (é, ą, ư, ă), so Polish, Czech, Romanian or Vietnamese read as plain vowels.
+    const w = latinBase(word);
     if (!w) return 0;
     // A silent final e (made, time) is not a syllable of its own.
     return Math.max(1, (w.replace(/(?<=[^aeiouy])e$/, '').match(/[aeiouy]+/g) || []).length);
   }
-  // Scripts not read here: about one syllable for every two and a half letters.
+  // A Chinese character, a Korean block or a Japanese kana is one syllable; a small ゃ or ッ joins the one before, a long ー is one.
+  if (CHARACTER_SYLLABLES.test(first)) return Math.max(1, [...word].filter((ch) => CHARACTER_SYLLABLES.test(ch) && !SMALL_KANA.test(ch)).length);
+  // Cyrillic and Georgian say each vowel letter as its own syllable (Bulgarian ъ is one too).
+  if (/[\p{Script=Cyrillic}\p{Script=Georgian}]/u.test(first)) return Math.max(1, (word.toLowerCase().match(/[аеёиоуыэюяіїєъѐѝაეიოუ]/gu) || []).length);
+  // Greek by vowel groups once its accents are off: αι, ει, ου are one sound.
+  if (/\p{Script=Greek}/u.test(first)) return Math.max(1, (unaccented(word).match(/[αεηιουω]+/g) || []).length);
   const letters = [...word].filter((ch) => /\p{L}/u.test(ch)).length;
+  // Arabic, Persian and Hebrew leave most vowels unwritten: about one syllable for every two letters.
+  if (/[\p{Script=Arabic}\p{Script=Hebrew}]/u.test(first)) return Math.max(1, Math.round(letters / 2));
+  // Scripts not read here (Thai among them): about one syllable for every two and a half letters.
   return Math.max(1, Math.round(letters / 2.5));
 };
 

@@ -8,7 +8,7 @@ import { stripTags, TAG_MARK, tagProblems, tagsOf } from '../server/lib/lineTags
 import { useTagPrefs } from '../services/tagPrefs';
 import { TagTextarea, type TagTextareaHandle } from './TagTextarea';
 import { usePhoneticTyping } from './review/usePhoneticTyping';
-import { getIndicLanguageConfig } from '../services/indicTransliteration';
+import { findIndicLanguageConfig, getIndicLanguageConfig } from '../services/indicTransliteration';
 import type { TakeWord } from '../services/takeRange';
 import { takeIsIn } from '../services/voiceChangeService';
 import { readRetakePlacement, writeRetakePlacement } from '../services/retakePlacement';
@@ -392,7 +392,8 @@ export const TakesPanel: React.FC<{
   const [lineTagsOpen, setLineTagsOpen] = useState(false);
   const phonetic = usePhoneticTyping(language);
   const langName = getIndicLanguageConfig(language).nativeName;
-  const phoneticButton = language && (
+  // Phonetic typing is for the Indian scripts: a French or Arabic take is typed as it is.
+  const phoneticButton = !!findIndicLanguageConfig(language) && (
     <button
       type="button"
       onClick={phonetic.toggle}

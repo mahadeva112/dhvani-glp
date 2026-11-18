@@ -4,11 +4,15 @@ import { examplesBlock, EXAMPLE_LANGUAGES } from './translationExamples.js';
 import { buildFixPrompt, buildMeaningFixPrompt } from './translationChecks.js';
 import { translateCueTexts, writeEffort, reviewEffort } from '../providers/gemini/translation.js';
 import { readFileSync } from 'node:fs';
+import { LANGUAGES, scriptOf } from './languages.js';
 
-/** The dub languages the app offers, read from the list in components/ProHeader.tsx (a component node cannot import). */
+/**
+ * The dub languages the app offers, read from the list in components/ProHeader.tsx (a component node cannot import).
+ * DHVANI GLP offers the global languages only, and they have no worked examples yet: their prompts go without the examples block.
+ */
 const DUB_LANGUAGES = (() => {
   const source = readFileSync(new URL('../../components/ProHeader.tsx', import.meta.url), 'utf8');
-  const list = source.slice(source.indexOf('export const DEFAULT_LANGUAGES'));
+  const list = source.slice(source.indexOf('export const GLOBAL_LANGUAGES'));
   return [...list.slice(0, list.indexOf('];')).matchAll(/code: '([^']+)'/g)].map((m) => m[1]);
 })();
 
@@ -22,9 +26,14 @@ const lines = (block) =>
       return [label, [...rest.matchAll(/"((?:[^"\\]|\\.)*)"(?: \||$)/g)].map((m) => m[1])];
     });
 
-test('every language in the dub language list has worked examples', () => {
+test('every language in the dub language list is one the language registry knows', () => {
   assert.ok(DUB_LANGUAGES.length > 0, 'the list was read');
-  for (const code of DUB_LANGUAGES) assert.ok(EXAMPLE_LANGUAGES.includes(code), code);
+  const known = new Set(LANGUAGES.map((l) => l.name));
+  for (const code of DUB_LANGUAGES) assert.ok(known.has(code), code);
+});
+
+test('no Indian language is offered: DHVANI GLP is for the global ones', () => {
+  for (const code of DUB_LANGUAGES) assert.ok(!scriptOf(code) || !/Devanagari|Bengali|Tamil|Telugu|Kannada|Malayalam|Gujarati|Gurmukhi|Odia/.test(scriptOf(code)), code);
 });
 
 test('each example splits over as many cues as its English, and the wrong and right forms differ', () => {

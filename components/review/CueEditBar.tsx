@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, Combine, Headphones, Languages, Loader2, Redo2, RotateCcw, Scissors, Undo2, X } from 'lucide-react';
 import { AudioSegment } from '../../types';
+import { joinsWithoutSpace, splitWords, wordsLike } from '../../server/lib/wordSplit.js';
 import { HistoryMenu, type ProjectHistoryView } from '../HistoryMenu';
 import {
   PAUSE_SECONDS,
@@ -472,8 +473,9 @@ function CutTools({ editing, a, b, n, flush = false }: { editing: CueEditing; a:
   const { tokens, measured } = cueTokens(a);
   const lastWord = tokens[tokens.length - 1]?.text ?? '';
   const pause = Math.max(0, b.startTime - a.endTime);
-  const firstDub = targetTextOf(a).split(/\s+/).filter(Boolean);
-  const dub = [...firstDub, ...targetTextOf(b).split(/\s+/).filter(Boolean)];
+  // Chinese, Japanese and Thai lines are cut into their words too, as moveDubBreak cuts them.
+  const firstDub: string[] = splitWords(targetTextOf(a));
+  const dub: string[] = [...firstDub, ...splitWords(targetTextOf(b))];
 
   return (
     <div className={`${flush ? '' : 'mt-2 pt-2 border-t border-edge'} space-y-2`}>
@@ -564,14 +566,14 @@ export function PickableWords({
   caretK: number | null;
   onPick: (k: number, start: number) => void;
 }) {
-  const words = text.split(/\s+/).filter(Boolean);
   const { tokens } = cueTokens(segment);
+  const words: string[] = wordsLike(text, tokens.map((token) => token.text));
   if (words.length < 2 || words.length !== tokens.length) return <>{text}</>;
   return (
     <>
       {words.map((word, k) => (
         <React.Fragment key={k}>
-          {k > 0 && ' '}
+          {k > 0 && !joinsWithoutSpace(words[k - 1], word) && ' '}
           {caretK === k && <span className="inline-block w-0.5 h-[1.1em] align-text-bottom bg-indigo-400 mr-0.5 animate-pulse" aria-hidden="true" />}
           <span
             onClick={() => onPick(k, tokens[k].start)}
