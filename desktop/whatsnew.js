@@ -5,6 +5,14 @@
  */
 window.WHATS_NEW = [
   {
+    version: '1.4.96',
+    changes: [
+      'DHVANI GLP dubs into the global languages: Arabic, Chinese (Simplified and Traditional), French, German, Japanese, Korean, Persian, Russian, Spanish, Ukrainian and many more. New projects start on Spanish, and the voice list shows the whole library with the voices for your language first.',
+      'Arabic, Hebrew, Persian and Kurdish read right to left in every text box, on Review and in the subtitles. Chinese, Japanese and Thai subtitles wrap correctly even though these languages put no spaces between words.',
+      'Line timing counts syllables properly in more scripts, including accented Latin letters, Cyrillic, Greek, Georgian, Chinese, Japanese and Korean.',
+    ],
+  },
+  {
     version: '1.4.95',
     changes: [
       'API settings → Transcribe lets you pick Scribe v2 or the new Scribe v3. Scribe v2 stays the default: v3 gives slightly cleaner words but makes fewer, longer lines and can hear one speaker as two.',
