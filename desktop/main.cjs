@@ -21,10 +21,10 @@ const { summarizeFreezeTrace, FREEZE_TRACE_CATEGORIES } = require('./freezeTrace
  * is taken (or reserved by Windows for Hyper-V/WSL/Docker), the engine starts
  * on a free port instead and requests to APP_URL are passed on to it.
  */
-const APP_PORT = Number(process.env.PORT) || 8788; // Offset from the dev default.
+const APP_PORT = Number(process.env.PORT) || 8798; // Offset from the dev default.
 const APP_URL = `http://127.0.0.1:${APP_PORT}`;
 let enginePort = APP_PORT;
-const RELEASES_API = 'https://api.github.com/repos/mahadeva112/dhvani/releases/latest';
+const RELEASES_API = 'https://api.github.com/repos/mahadeva112/dhvani-glp/releases/latest';
 
 /**
  * The app root, holding `server/`, `dist/` and `node_modules/`.
@@ -838,7 +838,7 @@ const createWindow = () => {
     minHeight: 700,
     backgroundColor: '#020617', // Matches the app's dark slate, so no white flash.
     show: false,
-    title: 'DHVANI',
+    title: 'DHVANI GLP',
     icon: path.join(__dirname, 'icons', process.platform === 'win32' ? 'icon.ico' : 'icon.png'),
     webPreferences: {
       // The window only ever loads our own local server, and the page has no
@@ -1040,7 +1040,7 @@ const describeComputer = async () => {
   const lines = [];
   const add = (label, value) => value !== '' && value != null && lines.push(`${label}: ${value}`);
 
-  add('DHVANI', `${app.getVersion()}${app.isPackaged ? '' : ' (development)'}`);
+  add('DHVANI GLP', `${app.getVersion()}${app.isPackaged ? '' : ' (development)'}`);
   add('Built for', process.arch);
   // An Intel build on an Apple Silicon Mac (or an x64 build on Windows on Arm) runs translated, much slower.
   add('Running translated (Rosetta)', app.runningUnderARM64Translation ? 'YES — this is the Intel build on an Apple Silicon Mac' : 'no');

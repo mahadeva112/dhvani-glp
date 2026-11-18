@@ -155,7 +155,7 @@ export const config = {
   isProduction: str('NODE_ENV', 'development') === 'production',
   isDesktop: bool('DHVANI_DESKTOP', false),
 
-  port: num('PORT', 8787),
+  port: num('PORT', 8797),
   clientPort: num('CLIENT_PORT', 3000),
   host: str('HOST', '127.0.0.1'),
   corsOrigins: list('CORS_ORIGIN', [

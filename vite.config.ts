@@ -22,13 +22,13 @@ export default defineConfig(({ mode, command }) => {
    * process managers routinely set it to the port THIS dev server should bind.
    * Taking that value as the proxy target points /api back at Vite itself, and
    * the app then reports the backend as unreachable ("Failed to fetch") even
-   * though it is running perfectly well on 8787. BACKEND_PORT is the
+   * though it is running perfectly well on 8797. BACKEND_PORT is the
    * unambiguous override; a PORT that matches our own port is ignored. That
    * includes a port given only as `vite --port N`, which autoStartBackend
    * catches once Vite has resolved it.
    */
   const envBackendPort = Number(env.BACKEND_PORT) || Number(env.PORT) || 0;
-  const serverPort = envBackendPort && envBackendPort !== clientPort ? envBackendPort : 8787;
+  const serverPort = envBackendPort && envBackendPort !== clientPort ? envBackendPort : 8797;
 
   return {
     // Relative asset URLs let the built app work when served from a subpath

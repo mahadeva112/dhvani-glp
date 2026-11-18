@@ -1,11 +1,11 @@
 {
-  "name": "dhvani",
-  "productName": "DHVANI",
+  "name": "dhvani-glp",
+  "productName": "DHVANI GLP",
   "private": true,
   "version": "1.4.95",
   "type": "module",
   "main": "desktop/main.cjs",
-  "description": "Local AI dubbing studio. ElevenLabs for transcription, word-accurate subtitle timestamps and voice; Gemini for translation.",
+  "description": "DHVANI GLP - local AI dubbing studio for global languages. ElevenLabs for transcription, word-accurate subtitle timestamps and voice; Gemini for translation.",
   "keywords": [
     "subtitles",
     "srt",
@@ -17,13 +17,13 @@
     "speech-to-text"
   ],
   "license": "MIT",
-  "homepage": "https://github.com/dhvani-studio/dhvani#readme",
+  "homepage": "https://github.com/mahadeva112/dhvani-glp#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/dhvani-studio/dhvani.git"
+    "url": "https://github.com/mahadeva112/dhvani-glp.git"
   },
   "bugs": {
-    "url": "https://github.com/dhvani-studio/dhvani/issues"
+    "url": "https://github.com/mahadeva112/dhvani-glp/issues"
   },
   "engines": {
     "node": ">=20"
@@ -51,7 +51,7 @@
     "dist:zip": "node scripts/package-release.mjs",
     "release": "npm version patch -m \"Release %s\" && git push --follow-tags",
     "release:minor": "npm version minor -m \"Release %s\" && git push --follow-tags",
-    "docker:build": "docker build -t dhvani:latest .",
+    "docker:build": "docker build -t dhvani-glp:latest .",
     "docker:run": "docker compose up -d"
   },
   "dependencies": {

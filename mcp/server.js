@@ -26,12 +26,12 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const REPO_DIR = path.resolve(here, '..');
 
 /*
- * Where the backend listens. The desktop app runs it on 8788 (offset from the
- * dev default so both can run), `npm run server` on 8787. DHVANI_URL pins one.
+ * Where the backend listens. The desktop app runs it on 8798 (offset from the
+ * dev default so both can run), `npm run server` on 8797. DHVANI_URL pins one.
  */
 const CANDIDATE_URLS = process.env.DHVANI_URL
   ? [process.env.DHVANI_URL.replace(/\/+$/, '')]
-  : ['http://127.0.0.1:8788', 'http://127.0.0.1:8787'];
+  : ['http://127.0.0.1:8798', 'http://127.0.0.1:8797'];
 
 let baseUrl = null;
 let foundAt = 0;
@@ -143,7 +143,7 @@ const tool = (handler) => async (args) => {
 
 /* ---------------------------------------------------------------- tools -- */
 
-const server = new McpServer({ name: 'dhvani', version: '0.1.0' });
+const server = new McpServer({ name: 'dhvani-glp', version: '0.1.0' });
 
 const FREE = { readOnlyHint: true, openWorldHint: false };
 // Calls a paid provider (ElevenLabs, Gemini or the gateway): each run spends credits.

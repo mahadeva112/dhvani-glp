@@ -31,7 +31,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-$TaskName = 'DHVANI Backend'
+$TaskName = 'DHVANI GLP Backend'
 $Root = Split-Path -Parent $PSScriptRoot
 $Launcher = Join-Path $PSScriptRoot 'start-backend-hidden.vbs'
 

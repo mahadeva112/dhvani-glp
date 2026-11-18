@@ -21,7 +21,7 @@ const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const { version } = require(path.join(ROOT, 'package.json'));
 
 const RELEASE_DIR = path.join(ROOT, 'release');
-const STAGE_NAME = `dhvani-${version}`;
+const STAGE_NAME = `dhvani-glp-${version}`;
 const STAGE = path.join(RELEASE_DIR, STAGE_NAME);
 
 /** Files and folders that make up a runnable install. */
@@ -154,7 +154,7 @@ fs.writeFileSync(
     ')',
     '',
     'echo Starting DHVANI...',
-    'start "" http://localhost:8787',
+    'start "" http://localhost:8797',
     'node server/index.js',
     'pause',
     '',
@@ -178,8 +178,8 @@ fs.writeFileSync(
     '  npm install --omit=dev',
     'fi',
     '',
-    'echo "Starting DHVANI on http://localhost:8787"',
-    '(sleep 2 && (open http://localhost:8787 2>/dev/null || xdg-open http://localhost:8787 2>/dev/null || true)) &',
+    'echo "Starting DHVANI on http://localhost:8797"',
+    '(sleep 2 && (open http://localhost:8797 2>/dev/null || xdg-open http://localhost:8797 2>/dev/null || true)) &',
     'exec node server/index.js',
     '',
   ].join('\n'),
@@ -201,7 +201,7 @@ fs.writeFileSync(
     '  Windows        double-click START-WINDOWS.bat',
     '  macOS / Linux  run ./start-macos-linux.sh in a terminal',
     '',
-    '  Your browser opens at http://localhost:8787 and asks for the two API',
+    '  Your browser opens at http://localhost:8797 and asks for the two API',
     '  keys. That is the whole setup — they are saved on this computer only.',
     '',
     'PREFER A FILE INSTEAD?',

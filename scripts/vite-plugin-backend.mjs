@@ -51,7 +51,7 @@ const isBackendUp = async (healthUrl) => {
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /** Where the backend listens when no usable port was configured. */
-const DEFAULT_BACKEND_PORT = 8787;
+const DEFAULT_BACKEND_PORT = 8797;
 
 export const autoStartBackend = ({ root, port, host = '127.0.0.1', watch = false }) => {
   let healthUrl = `http://${host}:${port}/api/health`;
@@ -245,7 +245,7 @@ export const autoStartBackend = ({ root, port, host = '127.0.0.1', watch = false
    * --port 5199`), while our .env uses PORT for the backend. Read that way,
    * /api is proxied back into Vite itself, the request loops until it dies,
    * and the app reports "Could not reach the local DHVANI backend: Failed to
-   * fetch" with a perfectly healthy backend on 8787. Only the resolved config
+   * fetch" with a perfectly healthy backend on 8797. Only the resolved config
    * knows the port Vite really binds — CLI flag, config file or default — so
    * the check lives here rather than in vite.config.ts.
    */
